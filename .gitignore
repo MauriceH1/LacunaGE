@@ -1,0 +1,6 @@
+_cmake/
+build/
+bin/
+int/
+
+desktop.ini
