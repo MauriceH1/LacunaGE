@@ -1,5 +1,7 @@
 #pragma once
 
+#define NOMINMAX
+
 #include <wrl.h>
 
 #include "../source/d3dx12.h"
@@ -17,11 +19,23 @@ namespace lcn { namespace resources
 		virtual ~DX12Device() override;
 
 		bool Initialize(Microsoft::WRL::ComPtr<ID3D12Device> a_Device);
+
+		virtual const uint32_t CreatePipelineState(const PipelineParams* const a_Params) const override;
+		
+		virtual const uint32_t UploadShader(const char* a_AbsPath) const override;
+		virtual const uint32_t UploadAndCompileShader(const char* a_AbsPath, const char* a_EntryPoint, EShaderTypes a_ShaderType) const override;
+
 		virtual const uint32_t UploadMesh(Vertex* a_Vertices, uint32_t a_NumVertices, const uint32_t* a_Indices, uint32_t a_NumIndices) const override;
 	
+		Microsoft::WRL::ComPtr<ID3D12PipelineState> GetPipelineState(uint32_t a_GUID) const;
+		Microsoft::WRL::ComPtr<ID3D12RootSignature> GetRootSignature() const;
+
 		D3D12_VERTEX_BUFFER_VIEW GetVertexBuffer(uint32_t a_GUID) const;
 		D3D12_INDEX_BUFFER_VIEW GetIndexBuffer(uint32_t a_GUID) const;
 	private:
 		DeviceData* m_Data;
+
+		uint32_t CreateNormalPipelineState(const PipelineParams* const a_Params) const;
+		uint32_t CreateRootSignature() const;
 	};
 };}; // lcn::resources

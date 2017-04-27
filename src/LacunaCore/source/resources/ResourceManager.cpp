@@ -14,56 +14,56 @@
 
 using namespace lcn::resources;
 
-namespace lcn { namespace resources
+namespace lcn::resources
 {
 	struct ResourceData {
 		const Device* device;
 		std::vector<uint32_t> m_Meshes;
+		std::string path;
 	};
-};}; // namespace lcn::resources
+}; // namespace lcn::resources
 
-ResourceManager::ResourceManager()
-{}
-
-ResourceManager::~ResourceManager()
-{}
-
-bool ResourceManager::Initialize(const Device* a_Device)
+ResourceManager::ResourceManager(const char* a_Argv0)
 {
 	m_Data = new ResourceData;
 
+	std::string filepath(a_Argv0);
+	size_t last_sep_idx = filepath.find_last_of('\\');
+	if (last_sep_idx == std::string::npos)
+		last_sep_idx = filepath.find_last_of('/');
+	last_sep_idx++;
+
+	char* directory = new char[filepath.substr(0, last_sep_idx).length()];
+	strcpy(directory, filepath.substr(0, last_sep_idx).c_str());
+	m_Data->path = std::string(directory);
+}
+
+ResourceManager::~ResourceManager()
+{
+}
+
+bool ResourceManager::Initialize(const Device* a_Device)
+{
 	m_Data->device = a_Device;
 
 	return true;
 }
 
+GUID ResourceManager::CreatePipeline(const PipelineParams a_Params)
+{
+	return m_Data->device->CreatePipelineState(&a_Params);
+}
+
 GUID ResourceManager::LoadModel(const char* a_RelPath)
 {
-	Vertex cubeVerts[] = {
-		{glm::vec3(-1.f,-1.f,-1.f),glm::normalize(glm::vec3(-1.f,-1.f,-1.f))},
-		{glm::vec3( 1.f,-1.f,-1.f),glm::normalize(glm::vec3( 1.f,-1.f,-1.f))},
-		{glm::vec3(-1.f, 1.f,-1.f),glm::normalize(glm::vec3(-1.f, 1.f,-1.f))},
-		{glm::vec3( 1.f, 1.f,-1.f),glm::normalize(glm::vec3( 1.f, 1.f,-1.f))},
-		{glm::vec3(-1.f,-1.f, 1.f),glm::normalize(glm::vec3(-1.f,-1.f, 1.f))},
-		{glm::vec3( 1.f,-1.f, 1.f),glm::normalize(glm::vec3( 1.f,-1.f, 1.f))},
-		{glm::vec3(-1.f, 1.f, 1.f),glm::normalize(glm::vec3(-1.f, 1.f, 1.f))},
-		{glm::vec3( 1.f, 1.f, 1.f),glm::normalize(glm::vec3( 1.f, 1.f, 1.f))}
-	};
-
-	uint32_t cubeIndices[] = {
-		0, 1, 2,
-		1, 3, 2,
-		4, 6, 5,
-		6, 7, 5
-	};
-
 	Assimp::Importer importer;
 
-	const aiScene* scene = importer.ReadFile(a_RelPath, aiProcess_Triangulate | aiProcess_FlipUVs);
+	std::string assetPath = m_Data->path;
+	assetPath.append(a_RelPath);
+
+	const aiScene* scene = importer.ReadFile(assetPath.c_str(), aiProcess_Triangulate );
 	if (scene && !(scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) && scene->mRootNode)
 	{
-
-		// m_Data->device->UploadMesh(cubeVerts, 8, cubeIndices, 6);
 		ImportMeshes(scene);
 		ProcessImportedNodes(scene->mRootNode, scene);
 	}
@@ -75,6 +75,18 @@ GUID ResourceManager::LoadModel(const char* a_RelPath)
 #endif
 
 	return 0;
+}
+
+GUID ResourceManager::LoadShader(const char* a_RelPath)
+{
+	return 0;
+}
+
+GUID ResourceManager::LoadAndCompileShader(const char* a_RelPath, const char* a_EntryPoint, EShaderTypes a_ShaderType)
+{
+	std::string shaderPath = m_Data->path;
+	shaderPath.append(a_RelPath);
+	return m_Data->device->UploadAndCompileShader(shaderPath.c_str(), a_EntryPoint, a_ShaderType);
 }
 
 void ResourceManager::ImportMeshes(const void *a_Scene)
@@ -121,7 +133,7 @@ void ResourceManager::ImportMeshes(const void *a_Scene)
 			}
 		}
 
-		m_Data->m_Meshes.push_back(m_Data->device->UploadMesh(vertexArray, mesh->mNumVertices, indexArray.data(), indexArray.size()));
+		m_Data->m_Meshes.push_back(m_Data->device->UploadMesh(vertexArray, mesh->mNumVertices, indexArray.data(), (uint32_t)indexArray.size()));
 	}
 }
 

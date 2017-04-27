@@ -24,6 +24,11 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/int/${CMAKE_CFG_I
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/bin/${CMAKE_CFG_INTDIR})
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/bin/${CMAKE_CFG_INTDIR})
 
+# set compiler specific flags (eg: optimizations, shared by all projects)
+IF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+	add_compile_options("/MP")
+ENDIF()
+
 add_subdirectory("thirdparty/assimp-3.3.1")
 #add_subdirectory("thirdparty/glm-0.9.8.4")
 

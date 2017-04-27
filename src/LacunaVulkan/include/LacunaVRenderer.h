@@ -15,7 +15,7 @@ namespace lcn {
 			virtual ~LacunaVRenderer() override final;
 
 			virtual bool Initialize(const lcn::platform::specifics::PlatformHandles* a_Handles) override final;
-			virtual void Render() override final;
+			virtual void Render(lcn::object::Entity* a_RootEntity) override final;
 			virtual void Cleanup() override final;
 
 		private:

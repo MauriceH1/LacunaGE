@@ -24,6 +24,7 @@ endforeach()
 set(LCN_DX12_SOURCES ${LCN_DX12_SOURCES} ${LCN_DX12_FILES})
 
 include_directories("include")
+include_directories("${CMAKE_SOURCE_DIR}/src/LacunaCore/includes")
 include_directories("${CMAKE_SOURCE_DIR}/src/LacunaCore/interfaces")
 include_directories("${CMAKE_SOURCE_DIR}/thirdparty/include")
 
@@ -33,6 +34,7 @@ include_directories(SYSTEM "${LCN_ASSIMP_INCLUDES}")
 add_library(LacunaDX12 ${LCN_DX12_SOURCES})
 
 target_link_libraries(LacunaDX12 "d3d12.lib" "dxgi.lib" "d3dcompiler.lib")
+add_dependencies(LacunaDX12 LacunaDX12Shaders)
 
 
 

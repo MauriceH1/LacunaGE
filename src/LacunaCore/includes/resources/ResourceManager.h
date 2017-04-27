@@ -16,12 +16,15 @@ namespace lcn { namespace resources
 	class ResourceManager
 	{
 	public:
-		ResourceManager();
+		ResourceManager(const char* a_Argv0);
 		~ResourceManager();
 
 		bool Initialize(const Device* a_Device);
-
+		GUID CreatePipeline(const PipelineParams a_Params);
 		GUID LoadModel(const char* a_RelPath);
+
+		GUID LoadShader(const char* a_RelPath);
+		GUID LoadAndCompileShader(const char* a_RelPath, const char* a_EntryPoint, EShaderTypes a_ShaderType);
 
 	private:
 		ResourceData* m_Data;

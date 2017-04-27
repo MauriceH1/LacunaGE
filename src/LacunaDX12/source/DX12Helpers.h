@@ -1,5 +1,7 @@
 #pragma once
 
+#define NOMINMAX
+
 #include "DX12Device.h"
 #include "d3dx12.h"
 #include <dxgi1_5.h>
@@ -7,21 +9,21 @@
 
 #include <exception>
 
-#define USE_WARP_DEVICE true
+#define USE_WARP_DEVICE false
 #define NUM_GRAPHICS_BUFFERS 2
 #define GRAPHICS_BUFFER_WIDTH 1280
 #define GRAPHICS_BUFFER_HEIGHT 720
 
-namespace lcn { namespace platform { namespace specifics
+namespace lcn::platform::specifics
 {
 	struct PlatformHandles
 	{
 		HINSTANCE hInstance;
 		HWND hWnd;
 	};
-};};}; // namespace lcn::platform::specifics
+}; // namespace lcn::platform::specifics
 
-namespace lcn { namespace graphics { namespace helpers
+namespace lcn::graphics::helpers
 {
 	struct DX12Data
 	{
@@ -32,6 +34,7 @@ namespace lcn { namespace graphics { namespace helpers
 		Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandqueue;
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvHeap;
+		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> cbvHeap;
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState;
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
@@ -45,13 +48,17 @@ namespace lcn { namespace graphics { namespace helpers
 		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
 		D3D12_INDEX_BUFFER_VIEW indexBufferView;
 
+		Microsoft::WRL::ComPtr<ID3D12Resource> constantBuffer;
+
+		UINT* m_cbvDataBegin = nullptr;
+
 		UINT frameIndex = 0;
 		UINT rtvDescriptorSize;
 
 		CD3DX12_VIEWPORT viewport;
 		CD3DX12_RECT scissorRect;
 	};
-};};}; // namespace lcn::graphics::helpers
+};// namespace lcn::graphics::helpers
 
 inline void ThrowIfFailed(HRESULT hr)
 {

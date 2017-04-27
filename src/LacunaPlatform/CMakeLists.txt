@@ -12,7 +12,7 @@ file(GLOB_RECURSE LCN_PLATFORM_FILES relative
 foreach(SRC_FILE ${LCN_PLATFORM_FILES})
   # get the path of the file relative to ${DIRECTORY}
   file(RELATIVE_PATH SRC_GROUP "${CMAKE_SOURCE_DIR}" ${SRC_FILE})
-  string(REGEX REPLACE "src/LacunaDX12/" "" SRC_GROUP ${SRC_GROUP})
+  string(REGEX REPLACE "src/LacunaPlatform/" "" SRC_GROUP ${SRC_GROUP})
   # Extract the folder, ie remove the filename part
   string(REGEX REPLACE "(.*)(/[^/]*)$" "\\1" SRC_GROUP ${SRC_GROUP})
   # Source_group expects \\ (double antislash), not / (slash)

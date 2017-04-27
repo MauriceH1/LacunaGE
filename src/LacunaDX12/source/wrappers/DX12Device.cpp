@@ -1,10 +1,10 @@
 #include "DX12Device.h"
 #include "../DX12Helpers.h"
-
 #include <iostream>
 #include <vector>
+#include <string>
 
-namespace lcn { namespace resources
+namespace lcn::resources
 {
 	struct DeviceData
 	{
@@ -13,9 +13,12 @@ namespace lcn { namespace resources
 		std::vector<D3D12_VERTEX_BUFFER_VIEW> vertexBufferViews;
 		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> indexBuffers;
 		std::vector<D3D12_INDEX_BUFFER_VIEW> indexBufferViews;
-		std::vector<Microsoft::WRL::ComPtr<ID3D12Resource>> shaders;
+		std::vector<Microsoft::WRL::ComPtr<ID3DBlob>> shaders;
+		std::vector<Microsoft::WRL::ComPtr<ID3D12PipelineState>> pipelines;
+
+		Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
 	};
-};}; // namespace lcn::resources
+}; // namespace lcn::resources
 
 using namespace lcn::resources;
 
@@ -26,14 +29,80 @@ DX12Device::DX12Device()
 
 DX12Device::~DX12Device()
 {
-	delete m_Data->device.ReleaseAndGetAddressOf();
+	//for (size_t i = 0; i < m_Data->pipelines.size(); i++)
+	//{
+	//	delete m_Data->pipelines.at(i).ReleaseAndGetAddressOf();
+	//	delete m_Data->shaders.at(i).ReleaseAndGetAddressOf();
+	//	delete m_Data->indexBuffers.at(i).ReleaseAndGetAddressOf();
+	//	delete m_Data->vertexBuffers.at(i).ReleaseAndGetAddressOf();
+	//}
+	//
+	//delete m_Data->device.ReleaseAndGetAddressOf();
 }
 
 bool DX12Device::Initialize(Microsoft::WRL::ComPtr<ID3D12Device> a_Device)
 {
+	a_Device->SetName(L"Device");
 	m_Data->device = a_Device;
 
 	return true;
+}
+
+const uint32_t DX12Device::CreatePipelineState(const PipelineParams* const a_Params) const
+{
+	return CreateNormalPipelineState(a_Params);
+}
+
+const uint32_t DX12Device::UploadShader(const char* a_AbsPath) const
+{
+	Microsoft::WRL::ComPtr<ID3DBlob> shaderBlob;
+
+	const size_t path_size = strlen(a_AbsPath) + 1;
+	wchar_t* uni_path = new wchar_t[path_size];
+	mbstowcs(uni_path, a_AbsPath, path_size);
+
+	ThrowIfFailed(D3DReadFileToBlob(uni_path, &shaderBlob));
+	m_Data->shaders.push_back(shaderBlob);
+	return m_Data->shaders.size();
+}
+
+const uint32_t DX12Device::UploadAndCompileShader(const char* a_AbsPath, const char* a_EntryPoint, EShaderTypes a_ShaderType) const
+{
+	Microsoft::WRL::ComPtr<ID3DBlob> shaderBlob;
+
+#if defined(_DEBUG)
+	// Enable better shader debugging with the graphics debugging tools.
+	UINT compileFlags = D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION;
+#else
+	UINT compileFlags = 0;
+#endif
+
+	const size_t path_size = strlen(a_AbsPath) + 1;
+	wchar_t* uni_path = new wchar_t[path_size];
+	mbstowcs(uni_path, a_AbsPath, path_size);
+
+	std::string shaderTarget;
+
+	switch (a_ShaderType)
+	{
+		case EShaderTypes::EShaderTypes_VS:
+		{
+			shaderTarget = "vs_5_0";
+		} break;
+
+		case EShaderTypes::EShaderTypes_PS:
+		{
+			shaderTarget = "ps_5_0";
+		} break;
+
+		default:
+		{
+			assert(false);
+		} break;
+	}
+	ThrowIfFailed(D3DCompileFromFile(uni_path, nullptr, nullptr, a_EntryPoint, shaderTarget.c_str(), compileFlags, 0, &shaderBlob, nullptr));
+	m_Data->shaders.push_back(shaderBlob);
+	return m_Data->shaders.size() - 1;
 }
 
 const uint32_t DX12Device::UploadMesh(Vertex* a_Vertices, uint32_t a_NumVertices, const uint32_t* a_Indices, uint32_t a_NumIndices) const
@@ -60,6 +129,8 @@ const uint32_t DX12Device::UploadMesh(Vertex* a_Vertices, uint32_t a_NumVertices
 		view.BufferLocation = vertexBuffer->GetGPUVirtualAddress();
 		view.StrideInBytes = sizeof(Vertex);
 		view.SizeInBytes = vertexBufferSize;
+
+		vertexBuffer->SetName(L"VertexBuffer");
 
 		m_Data->vertexBuffers.push_back(vertexBuffer);
 		m_Data->vertexBufferViews.push_back(view);
@@ -92,7 +163,17 @@ const uint32_t DX12Device::UploadMesh(Vertex* a_Vertices, uint32_t a_NumVertices
 		m_Data->indexBufferViews.push_back(view);
 	}
 
-	return (uint32_t)m_Data->vertexBuffers.size();
+	return (uint32_t)m_Data->vertexBuffers.size() - 1;
+}
+
+Microsoft::WRL::ComPtr<ID3D12PipelineState> DX12Device::GetPipelineState(uint32_t a_GUID) const
+{
+	return m_Data->pipelines.at(a_GUID);
+}
+
+Microsoft::WRL::ComPtr<ID3D12RootSignature> DX12Device::GetRootSignature() const
+{
+	return m_Data->rootSignature;
 }
 
 D3D12_VERTEX_BUFFER_VIEW DX12Device::GetVertexBuffer(uint32_t a_GUID) const
@@ -103,4 +184,83 @@ D3D12_VERTEX_BUFFER_VIEW DX12Device::GetVertexBuffer(uint32_t a_GUID) const
 D3D12_INDEX_BUFFER_VIEW DX12Device::GetIndexBuffer(uint32_t a_GUID) const
 {
 	return m_Data->indexBufferViews.at(a_GUID);
+}
+
+uint32_t DX12Device::CreateNormalPipelineState(const PipelineParams* const a_Params) const
+{
+	CreateRootSignature();
+
+	D3D12_INPUT_ELEMENT_DESC inputElementDescs[] =
+	{
+		{ "POSITION",  0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL",    0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TANGENT",   0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 24, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "BITANGENT", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 36, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD",  0, DXGI_FORMAT_R32G32_FLOAT,    0, 48, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+	};
+
+	D3D12_RASTERIZER_DESC rasterizerDesc = {};
+	rasterizerDesc.AntialiasedLineEnable = true;
+	rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
+	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
+	rasterizerDesc.MultisampleEnable = true;
+
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
+	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
+	psoDesc.pRootSignature = m_Data->rootSignature.Get();
+	psoDesc.VS = CD3DX12_SHADER_BYTECODE(m_Data->shaders.at(a_Params->VertexShader).Get());
+	psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_Data->shaders.at(a_Params->PixelShader).Get());
+	psoDesc.RasterizerState = rasterizerDesc;
+	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
+	psoDesc.DepthStencilState.DepthEnable = false;
+	psoDesc.DepthStencilState.StencilEnable = false;
+	psoDesc.SampleMask = UINT_MAX;
+	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	psoDesc.NumRenderTargets = 1;
+	psoDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	psoDesc.SampleDesc.Count = 1;
+
+	Microsoft::WRL::ComPtr<ID3D12PipelineState> state;
+	ThrowIfFailed(m_Data->device->CreateGraphicsPipelineState(&psoDesc, IID_PPV_ARGS(&state)));
+	m_Data->pipelines.push_back(state);
+	return m_Data->pipelines.size() - 1;
+}
+
+uint32_t DX12Device::CreateRootSignature() const
+{
+	// Create an empty root signature.
+
+	D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
+
+	// This is the highest version the sample supports. If CheckFeatureSupport succeeds, the HighestVersion returned will not be greater than this.
+	featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+
+	if (FAILED(m_Data->device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
+	{
+		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+	}
+
+	CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
+	CD3DX12_ROOT_PARAMETER1 rootParameters[1];
+
+	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+	rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
+
+	// Allow input layout and deny unnecessary access to certain pipeline stages.
+	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
+		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+
+	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+	rootSignatureDesc.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
+
+	Microsoft::WRL::ComPtr<ID3DBlob> signature;
+	Microsoft::WRL::ComPtr<ID3DBlob> error;
+	ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, featureData.HighestVersion, &signature, &error));
+	ThrowIfFailed(m_Data->device->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), IID_PPV_ARGS(&m_Data->rootSignature)));
+
+	return 0;
 }

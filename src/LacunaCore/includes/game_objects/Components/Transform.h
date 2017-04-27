@@ -2,7 +2,7 @@
 #include <glm\gtc\quaternion.hpp>
 #include <glm\vec3.hpp>
 
-namespace lcn::object
+namespace lcn { namespace object
 {
 	class Entity;
 	class Transform
@@ -13,16 +13,6 @@ namespace lcn::object
 		Transform(glm::vec3 a_Position, glm::quat a_Rotation, glm::vec3 a_Scale, Entity* a_Owner = nullptr);
 		~Transform();
 	
-		void Update();
-
-		void SetTranslation(glm::vec3 a_Translation);
-		void SetRotation(glm::quat a_Rotation);
-		void SetScale(glm::vec3 a_Scale);
-
-		void AddTranslation(glm::vec3 a_DeltaTranslation);
-		void AddRotation(glm::quat a_DeltaRotation);
-		void AddScale(glm::vec3 a_DeltaScale);
-
 		glm::mat4x4 GetWorldMatrix();
 		glm::mat4x4 GetLocalMatrix();
 		glm::vec3 GetTranslation();
@@ -38,4 +28,4 @@ namespace lcn::object
 		glm::vec3 m_Translation;
 		glm::mat4 m_LocalMatrix;
 	};
-}; // namespace lcn::object
+};};

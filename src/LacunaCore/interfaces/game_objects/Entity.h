@@ -1,7 +1,7 @@
 #pragma once
 
-#include "game_objects/Component.h"
-#include "game_objects/Transform.h"
+#include "game_objects\Component.h"
+#include "game_objects\Transform.h"
 
 #include <vector>
 
@@ -13,16 +13,18 @@ namespace lcn::object
 		Entity();
 		~Entity();
 
+		virtual void Update();
+
+		void SetParent(Entity* a_NewParent);
+
 		void AddComponent(Component* a_Component);
+		void AddChild(Entity* a_NewChild);
 
 		const glm::mat4 GetModelMatrix() const;
 		const glm::mat4 GetWorldMatrix() const;
-
 		const Entity* GetParent() const;
 		const std::vector<Entity*> GetChildren() const;
-
 		const std::vector<Component*> GetComponents() const;
-
 		template<typename T>
 		const std::vector<T*> GetComponentsByType() const
 		{
@@ -42,7 +44,7 @@ namespace lcn::object
 
 	protected:
 		Transform* m_Transform = nullptr;
-		Entity* m_Parent;
+		Entity* m_Parent = nullptr;
 		std::vector<Entity*> m_Children;
 		std::vector<Component*> m_Components;
 	};

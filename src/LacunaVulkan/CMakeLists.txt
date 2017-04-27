@@ -24,6 +24,7 @@ set(LCN_VULKAN_SOURCES ${LCN_VULKAN_SOURCES} ${LCN_VULKAN_FILES})
 
 include_directories("include")
 include_directories("${Vulkan_INCLUDE_DIR}")
+include_directories("${CMAKE_SOURCE_DIR}/src/LacunaCore/includes")
 include_directories("${CMAKE_SOURCE_DIR}/src/LacunaCore/interfaces")
 
 include_directories(SYSTEM "${LCN_GLM_INCLUDES}")

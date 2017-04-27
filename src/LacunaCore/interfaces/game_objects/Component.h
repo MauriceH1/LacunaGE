@@ -1,7 +1,8 @@
-#include "game_objects/Entity.h"
+#pragma once
 
-namespace lcn { namespace object
+namespace lcn::object
 {
+	class Entity;
 	class Component
 	{
 	public:
@@ -10,7 +11,9 @@ namespace lcn { namespace object
 		
 		virtual void Update() = 0;
 		
+		void SetParent(Entity* a_Parent) { m_Parent = a_Parent; };
+
 	protected:
 		Entity* m_Parent = 0;
 	};
-};}; // namespace lcn::object
+}; // namespace lcn::object

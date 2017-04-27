@@ -1,18 +1,19 @@
 #pragma once
 
 #include "resources\Device.h"
+#include "game_objects/Entity.h"
 
 #include <glm\vec3.hpp>
 #include <glm\vec4.hpp>
 
 #include <string>
 
-namespace lcn { namespace platform { namespace specifics
+namespace lcn::platform::specifics
 {
 	struct PlatformHandles;
-};};}; // namespace lcn::platform::specifics
+}; // namespace lcn::platform::specifics
 
-namespace lcn { namespace graphics
+namespace lcn::graphics
 {
 	struct TVertex
 	{
@@ -27,9 +28,9 @@ namespace lcn { namespace graphics
 		virtual ~Renderer() {};
 
 		virtual bool Initialize(const lcn::platform::specifics::PlatformHandles* a_Handles) = 0;
-		virtual void Render() = 0;
+		virtual void Render(lcn::object::Entity* a_RootEntity) = 0;
 		virtual void Cleanup() = 0;
 
 		virtual const lcn::resources::Device* GetDevice() const = 0;
 	};
-};}; // namespace lcn::graphics
+}; // namespace lcn::graphics
