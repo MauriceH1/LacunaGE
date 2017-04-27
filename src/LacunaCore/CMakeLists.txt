@@ -37,7 +37,7 @@ IF(${CMAKE_SYSTEM_VERSION} VERSION_GREATER "10.0")
 	target_link_libraries(LacunaCore LacunaDX12)
 ENDIF()
 
-
+add_dependencies(LacunaCore LacunaAssets)
 
 
 

@@ -30,7 +30,7 @@ void main(int argc, char* argv[])
 	pipelineParams.PixelShader = PShader.ID;
 	lcn::resources::GUID pipe = resourceManager->CreatePipeline(pipelineParams);
 
-	resourceManager->LoadModel("Assets/cube.obj");
+	resourceManager->LoadModel("assets/cube.obj");
 
 	auto sceneRoot = lcn::EntityFactory::CreateEntity();
 
