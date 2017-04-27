@@ -1,6 +1,6 @@
 Structure:
 
-/
+/<br />
 --- bin/
 --- build/
 --- lib/
