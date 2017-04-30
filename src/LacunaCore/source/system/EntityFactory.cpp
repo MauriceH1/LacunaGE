@@ -1,4 +1,6 @@
 #include "system/EntityFactory.h"
+#include "game_objects/Entity.h"
+#include "game_objects/Camera.h"
 
 #include <list>
 
@@ -9,13 +11,27 @@ namespace lcn::EntityFactory
 {
 	namespace // Data Members
 	{
-		std::list<std::shared_ptr<Entity>> m_Entities;
+		std::list<Entity*> m_Entities;
+		std::list<Camera*> m_Cameras;
 	}
 
-	std::shared_ptr<lcn::object::Entity> CreateEntity()
+	lcn::object::Entity* CreateEntity()
 	{
-		std::shared_ptr<Entity> entity = std::make_shared<Entity>();
+		Entity* entity = new Entity();
 		m_Entities.push_back(entity);
 		return entity;
 	}
-}; // namespace
+
+	lcn::object::Camera* CreateCamera()
+	{
+		Camera* camera = new Camera();
+		m_Entities.push_back(camera);
+		m_Cameras.push_back(camera);
+		return camera;
+	}
+
+	lcn::object::Camera* GetMainCamera()
+	{
+		return m_Cameras.front();
+	}
+}; // namespace lcn::EntityFactory

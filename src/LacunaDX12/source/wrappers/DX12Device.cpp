@@ -201,6 +201,7 @@ uint32_t DX12Device::CreateNormalPipelineState(const PipelineParams* const a_Par
 
 	D3D12_RASTERIZER_DESC rasterizerDesc = {};
 	rasterizerDesc.AntialiasedLineEnable = true;
+	rasterizerDesc.FrontCounterClockwise = TRUE;
 	rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
 	rasterizerDesc.MultisampleEnable = true;

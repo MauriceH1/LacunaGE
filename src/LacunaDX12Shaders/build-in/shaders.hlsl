@@ -22,5 +22,5 @@ PSInput VSMain(float4 position : POSITION, float3 normal : NORMAL, float3 tangen
 
 float4 PSMain(PSInput input) : SV_TARGET
 {
-	return float4(1.0, 0.6, 0.2, 0.0) + input.color * float4(1.0, 0.6, 0.2, 0.0);
+	return input.color;
 }

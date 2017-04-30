@@ -1,7 +1,7 @@
 #pragma once
 
-#include "game_objects\Component.h"
-#include "game_objects\Transform.h"
+#include "game_objects/Component.h"
+#include "game_objects/Transform.h"
 
 #include <vector>
 
@@ -15,18 +15,29 @@ namespace lcn::object
 
 		virtual void Update();
 
-		void SetParent(Entity* a_NewParent);
-
-		void AddComponent(Component* a_Component);
-		void AddChild(Entity* a_NewChild);
-
+		// Transform Functions
+		const glm::vec3 GetPosition() const;
+		const glm::quat GetRotation() const;
+		const glm::vec3 GetScale() const;
+		void SetPosition(glm::vec3 a_Position);
+		void SetRotation(glm::vec3 a_Rotation);
+		void SetScale(glm::vec3 a_Scale);
+		void AddPosition(glm::vec3 a_Position);
+		void AddRotation(glm::quat a_Rotation);
+		void AddScale(glm::vec3 a_Scale);
 		const glm::mat4 GetModelMatrix() const;
 		const glm::mat4 GetWorldMatrix() const;
+		const glm::vec3 GetForward() const;
+
 		const Entity* GetParent() const;
+		void SetParent(Entity* a_NewParent);
+		void Entity::AddChild(Entity* a_NewChild);
 		const std::vector<Entity*> GetChildren() const;
+
+		void AddComponent(Component* a_Component);
 		const std::vector<Component*> GetComponents() const;
-		template<typename T>
-		const std::vector<T*> GetComponentsByType() const
+
+		template<typename T> const std::vector<T*> GetComponentsByType() const
 		{
 			std::vector<T*> comps;
 
@@ -44,7 +55,7 @@ namespace lcn::object
 
 	protected:
 		Transform* m_Transform = nullptr;
-		Entity* m_Parent = nullptr;
+		Entity* m_Parent;
 		std::vector<Entity*> m_Children;
 		std::vector<Component*> m_Components;
 	};

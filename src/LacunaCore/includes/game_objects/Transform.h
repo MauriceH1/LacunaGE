@@ -28,14 +28,22 @@ namespace lcn::object
 		glm::vec3 GetTranslation();
 		glm::quat GetRotation();
 		glm::vec3 GetScale();
+
+		glm::vec3 GetForward();
 	
 	private:
 		Entity* m_Owner = nullptr;
 		Transform* m_Parent = nullptr;
 
+		bool m_Uptodate = true;
+
 		glm::vec3 m_Scale;
 		glm::quat m_Rotation;
 		glm::vec3 m_Translation;
 		glm::mat4 m_LocalMatrix;
+
+		glm::vec3 m_Forward;
+		glm::vec3 m_Up;
+		glm::vec3 m_Right;
 	};
 }; // namespace lcn::object

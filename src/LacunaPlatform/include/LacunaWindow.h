@@ -16,6 +16,10 @@ namespace lcn { namespace platform
 		std::string name = std::string("Lacuna Window");
 		bool borderless = false;
 		bool fullscreen = false;
+
+		void(*KeyUpFunction)(__int64 a_KeyCode) = nullptr;
+		void(*KeyDownFunction)(__int64 a_KeyCode) = nullptr;
+
 	};
 
 	class LacunaWindow
@@ -31,7 +35,8 @@ namespace lcn { namespace platform
 
 	protected:
 		virtual const int32_t Initialize() = 0;
-
+		void(*KeyUpFunc)(__int64 a_KeyCode);
+		void(*KeyDownFunc)(__int64 a_KeyCode);
 
 		bool m_Borderless;
 		bool m_Fullscreen;

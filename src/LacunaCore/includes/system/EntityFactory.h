@@ -1,10 +1,15 @@
 #pragma once
 
-#include <memory>
-#include "game_objects/Entity.h"
-
+namespace lcn::object
+{
+	class Entity;
+	class Camera;
+}
 
 namespace lcn::EntityFactory
 {
-	std::shared_ptr<lcn::object::Entity> CreateEntity();
-}
+	lcn::object::Entity* CreateEntity();
+	lcn::object::Camera* CreateCamera();
+
+	lcn::object::Camera* GetMainCamera();
+}; // namespace lcn::EntityFactory

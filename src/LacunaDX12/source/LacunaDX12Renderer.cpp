@@ -1,5 +1,7 @@
 #include "LacunaDX12Renderer.h"
 #include "DX12Helpers.h"
+#include "system/EntityFactory.h"
+#include "game_objects/Camera.h"
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/mat4x4.hpp>
@@ -236,8 +238,15 @@ void LacunaDX12Renderer::Render(lcn::object::Entity* a_RootEntity)
 {
 	PrepareData();
 
+	lcn::object::Camera* camera = lcn::EntityFactory::GetMainCamera();
+	// glm::mat4 projectionMatrix = camera->GetProjectionMatrix();
+	// glm::mat4 viewMatrix = camera->GetViewMatrix();
+	// SEE IF THIS WOULD BE AN OPTIMIZATION
+
+	// Transform data
 	MVP_CONSTANT_BUFFER buf = {};
-	buf.mvp = glm::perspectiveFovRH<float>(glm::radians(80.f), 1280.f, 720, 0.001f, 1000.f) * a_RootEntity->GetWorldMatrix();// *glm::perspectiveFovLH<float>(glm::radians(80.f), 1280.f, 720, 0.001f, 1000.f);
+	// glm::perspectiveFovRH<float>(glm::radians(80.f), 1280.f, 720, 0.001f, 1000.f)
+	buf.mvp = camera->GetProjectionMatrix() * camera->GetViewMatrix() * a_RootEntity->GetWorldMatrix();// *glm::perspectiveFovLH<float>(glm::radians(80.f), 1280.f, 720, 0.001f, 1000.f);
 
 	memcpy(m_Data->m_cbvDataBegin, &buf, sizeof(buf));
 
