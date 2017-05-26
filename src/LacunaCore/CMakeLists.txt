@@ -21,6 +21,7 @@ include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/src/LacunaPlatform/include")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/src/LacunaCore/interfaces")
 include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/src/LacunaCore/includes")
 
+include_directories(SYSTEM "${LCN_MC_INCLUDES}")
 include_directories(SYSTEM "${LCN_GLM_INCLUDES}")
 include_directories(SYSTEM "${LCN_ASSIMP_INCLUDES}")
 

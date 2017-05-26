@@ -3,7 +3,12 @@
 #include <cstdint>
 #include "resources\Device.h"
 
-namespace lcn { namespace resources
+namespace lcn::object
+{
+	class Entity;
+}; // namespace lcn::object
+
+namespace lcn::resources
 {
 	struct GUID
 	{
@@ -21,7 +26,7 @@ namespace lcn { namespace resources
 
 		bool Initialize(const Device* a_Device);
 		GUID CreatePipeline(const PipelineParams a_Params);
-		GUID LoadModel(const char* a_RelPath);
+		lcn::object::Entity* LoadModel(const char* a_RelPath);
 
 		GUID LoadShader(const char* a_RelPath);
 		GUID LoadAndCompileShader(const char* a_RelPath, const char* a_EntryPoint, EShaderTypes a_ShaderType);
@@ -29,7 +34,7 @@ namespace lcn { namespace resources
 	private:
 		ResourceData* m_Data;
 
-		void ImportMeshes(const void *a_Scene);
-		void ProcessImportedNodes(const void *a_Node, const void *a_Scene);
+		void ImportMeshes(const void *a_Scene, void* a_NodeLinker);
+		lcn::object::Entity* ProcessImportedNodes(const void *a_Node, const void *a_Scene, void* a_NodeLinker, lcn::object::Entity* a_ParentEntity = nullptr);
 	};
-};}; // lcn::resources
+}; // namespace lcn::resources

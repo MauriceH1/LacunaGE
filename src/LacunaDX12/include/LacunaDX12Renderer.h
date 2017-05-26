@@ -12,7 +12,7 @@ namespace lcn::graphics
 		virtual ~LacunaDX12Renderer() override final;
 
 		virtual bool Initialize(const lcn::platform::specifics::PlatformHandles* a_Handles) override final;
-		virtual void Render(lcn::object::Entity* a_RootEntity) override final;
+		virtual void Render(lcn::resources::SceneResource* a_Scene) override final;
 		void OldRender();
 		virtual void Cleanup() override final;
 
@@ -21,7 +21,7 @@ namespace lcn::graphics
 	private:
 		void WaitForPreviousFrame();
 		void PopulateCommandList();
-		void PrepareData();
+		void PrepareData(lcn::resources::SceneResource* a_Scene);
 
 		struct helpers::DX12Data* m_Data;
 

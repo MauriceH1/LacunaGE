@@ -1,10 +1,12 @@
 #include "game_objects/Entity.h"
 
+#include <iostream>
+
 using namespace lcn::object;
 
 Entity::Entity()
 {
-	m_Transform = new Transform(glm::vec3(0.0f), glm::quat(), glm::vec3(1));
+	m_Transform = new Transform(glm::vec3(0.0f), glm::quat(), glm::vec3(1), this);
 }
 
 Entity::~Entity()
@@ -15,6 +17,11 @@ Entity::~Entity()
 
 void Entity::Update()
 {
+}
+
+void Entity::UpdateTransforms()
+{
+	m_Transform->Update();
 }
 
 const glm::vec3 Entity::GetPosition() const
@@ -30,6 +37,11 @@ const glm::quat Entity::GetRotation() const
 const glm::vec3 Entity::GetScale() const
 {
 	return m_Transform->GetScale();
+}
+
+void Entity::SetLocalMatrix(glm::mat4x4 a_LocalMatrix)
+{
+	m_Transform->SetLocalMatrix(a_LocalMatrix);
 }
 
 void Entity::SetPosition(glm::vec3 a_Position)
@@ -72,11 +84,6 @@ const glm::mat4 Entity::GetWorldMatrix() const
 	return m_Transform->GetWorldMatrix();
 }
 
-const glm::vec3 Entity::GetForward() const
-{
-	return m_Transform->GetForward();
-}
-
 void Entity::SetParent(Entity* a_NewParent)
 {
 	m_Parent = a_NewParent;
@@ -92,9 +99,9 @@ void Entity::AddChild(Entity* a_NewChild)
 	m_Children.push_back(a_NewChild);
 }
 
-const std::vector<Entity*> Entity::GetChildren() const
+const std::vector<Entity*>* Entity::GetChildren() const
 {
-	return m_Children;
+	return &m_Children;
 }
 
 void Entity::AddComponent(Component *a_Component)
@@ -106,4 +113,24 @@ void Entity::AddComponent(Component *a_Component)
 const std::vector<Component*> Entity::GetComponents() const
 {
 	return m_Components;
+}
+
+const glm::vec3 Entity::GetForward() const
+{
+	return m_Transform->GetForward();
+}
+
+const glm::vec3 Entity::GetUp() const
+{
+	return m_Transform->GetUp();
+}
+
+const glm::vec3 Entity::GetRight() const
+{
+	return m_Transform->GetRight();
+}
+
+void Entity::SetTransformOutdated()
+{
+	m_Transform->SetOutdated();
 }

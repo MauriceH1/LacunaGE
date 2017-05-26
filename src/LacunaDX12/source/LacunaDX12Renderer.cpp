@@ -1,10 +1,20 @@
 #include "LacunaDX12Renderer.h"
 #include "DX12Helpers.h"
 #include "system/EntityFactory.h"
+#include <game_objects/Entity.h>
 #include "game_objects/Camera.h"
-#include <iostream>
+#include "game_objects/Components/MeshComponent.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/mat4x4.hpp>
+#include <iostream>
+#include <stack>
+
+/*
+	This file is heavily based upon the DX-Graphics-Sample files provided by Microsoft
+	A new version of this is in the works but not yet ready for implementation.
+
+	Rendering currently happens with only 1 object
+*/
 
 using namespace lcn::graphics;
 using Microsoft::WRL::ComPtr;
@@ -198,10 +208,6 @@ void LacunaDX12Renderer::CreateObjects()
 		cbvDesc.SizeInBytes = (sizeof(MVP_CONSTANT_BUFFER) + 255) & ~255;	// CB size is required to be 256-byte aligned.
 		m_Data->device->CreateConstantBufferView(&cbvDesc, m_Data->cbvHeap->GetCPUDescriptorHandleForHeapStart());
 
-		std::cout << "Buffer size:\t" << 1024 * 64 << ";\n";
-		std::cout << "buff-object:\t" << cbvDesc.SizeInBytes << ";\n";
-		std::cout << "Buffer left:\t" << 1024 * 64 - cbvDesc.SizeInBytes << ";\n";
-
 		// Map and initialize the constant buffer. We don't unmap this until the
 		// app closes. Keeping things mapped for the lifetime of the resource is okay.
 		CD3DX12_RANGE readRange(0, 0);		// We do not intend to read from this resource on the CPU.
@@ -234,9 +240,9 @@ void LacunaDX12Renderer::CreateObjects()
 	}
 }
 
-void LacunaDX12Renderer::Render(lcn::object::Entity* a_RootEntity)
+void LacunaDX12Renderer::Render(lcn::resources::SceneResource* a_Scene)
 {
-	PrepareData();
+	PrepareData(a_Scene);
 
 	lcn::object::Camera* camera = lcn::EntityFactory::GetMainCamera();
 	// glm::mat4 projectionMatrix = camera->GetProjectionMatrix();
@@ -244,11 +250,11 @@ void LacunaDX12Renderer::Render(lcn::object::Entity* a_RootEntity)
 	// SEE IF THIS WOULD BE AN OPTIMIZATION
 
 	// Transform data
-	MVP_CONSTANT_BUFFER buf = {};
-	// glm::perspectiveFovRH<float>(glm::radians(80.f), 1280.f, 720, 0.001f, 1000.f)
-	buf.mvp = camera->GetProjectionMatrix() * camera->GetViewMatrix() * a_RootEntity->GetWorldMatrix();// *glm::perspectiveFovLH<float>(glm::radians(80.f), 1280.f, 720, 0.001f, 1000.f);
-
-	memcpy(m_Data->m_cbvDataBegin, &buf, sizeof(buf));
+	//MVP_CONSTANT_BUFFER buf = {};
+	//// glm::perspectiveFovRH<float>(glm::radians(80.f), 1280.f, 720, 0.001f, 1000.f)
+	//buf.mvp = camera->GetProjectionMatrix() * camera->GetViewMatrix() * a_RootEntity->GetWorldMatrix();// *glm::perspectiveFovLH<float>(glm::radians(80.f), 1280.f, 720, 0.001f, 1000.f);
+	//
+	//memcpy(m_Data->m_cbvDataBegin, &buf, sizeof(buf));
 
 	// EndPreparation();
 
@@ -265,42 +271,24 @@ void LacunaDX12Renderer::Render(lcn::object::Entity* a_RootEntity)
 	WaitForPreviousFrame();
 }
 
-void LacunaDX12Renderer::PrepareData()
+void LacunaDX12Renderer::PrepareData(lcn::resources::SceneResource* a_Scene)
 {
+	const std::vector<lcn::object::Entity*>* entities = a_Scene->GetEntities();
+	lcn::object::Camera* camera = lcn::EntityFactory::GetMainCamera();
 
-}
+	MVP_CONSTANT_BUFFER mvp_cb = {};
 
-void LacunaDX12Renderer::OldRender()
-{
-	m_Rotation.y += 15.f / 60.f;
-	m_Rotation.z += 5.f / 60.f;
-	m_Rotation.x -= 5.f / 60.f;
-	if (m_Rotation.z > 360)
-		m_Rotation.z - 360;
-	if (m_Rotation.y > 360)
-		m_Rotation.y - 360;
-	if (m_Rotation.x < -360)
-		m_Rotation.x + 360;
-	glm::mat4 mvp = glm::perspectiveFovLH<float>(glm::radians(80.f), 1280.f, 720, 0.001f, 1000.f);
-	mvp = glm::translate(mvp, glm::vec3(-1.2f, -1.5f, 4.0f));
-	mvp = glm::rotate(mvp, glm::length(m_Rotation), glm::normalize(m_Rotation));
-	//memcpy(m_Data->m_cbvDataBegin, &mvp_cb, sizeof(mvp_cb));
-	
-	mvp_cb.mvp = mvp;
-	
-	memcpy(m_Data->m_cbvDataBegin, &mvp_cb, sizeof(mvp_cb));
-	// 
-	// // Record all the commands we need to render the scene into the command list.
-	PopulateCommandList();
-	
-	// Execute the command list.
-	ID3D12CommandList* ppCommandLists[] = {m_Data->commandList.Get()};
-	m_Data->commandqueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-	
-	// Present the frame.
-	ThrowIfFailed(m_Data->swapchain->Present(1, 0));
-	
-	WaitForPreviousFrame();
+	int meshIndex = 0;
+	for (size_t i = 0; i < entities->size(); i++)
+	{
+		std::vector<lcn::object::MeshComponent*> meshes = entities->at(i)->GetComponentsByType<lcn::object::MeshComponent>();
+		for (size_t j = 0; j < meshes.size(); j++)
+		{
+			mvp_cb.mvp = camera->GetProjectionMatrix() * camera->GetViewMatrix() * entities->at(i)->GetWorldMatrix();
+			memcpy(m_Data->m_cbvDataBegin + j * sizeof(mvp_cb), &mvp_cb, sizeof(mvp_cb));
+			meshIndex++;
+		}
+	}
 }
 
 void LacunaDX12Renderer::Cleanup()
@@ -380,4 +368,37 @@ void LacunaDX12Renderer::PopulateCommandList()
 	m_Data->commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_Data->renderTargets[m_Data->frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
 	ThrowIfFailed(m_Data->commandList->Close());
+}
+
+void LacunaDX12Renderer::OldRender()
+{
+	m_Rotation.y += 15.f / 60.f;
+	m_Rotation.z += 5.f / 60.f;
+	m_Rotation.x -= 5.f / 60.f;
+	if (m_Rotation.z > 360)
+		m_Rotation.z - 360;
+	if (m_Rotation.y > 360)
+		m_Rotation.y - 360;
+	if (m_Rotation.x < -360)
+		m_Rotation.x + 360;
+	glm::mat4 mvp = glm::perspectiveFovLH<float>(glm::radians(80.f), 1280.f, 720, 0.001f, 1000.f);
+	mvp = glm::translate(mvp, glm::vec3(-1.2f, -1.5f, 4.0f));
+	mvp = glm::rotate(mvp, glm::length(m_Rotation), glm::normalize(m_Rotation));
+	//memcpy(m_Data->m_cbvDataBegin, &mvp_cb, sizeof(mvp_cb));
+
+	mvp_cb.mvp = mvp;
+
+	memcpy(m_Data->m_cbvDataBegin, &mvp_cb, sizeof(mvp_cb));
+	// 
+	// // Record all the commands we need to render the scene into the command list.
+	PopulateCommandList();
+
+	// Execute the command list.
+	ID3D12CommandList* ppCommandLists[] = { m_Data->commandList.Get() };
+	m_Data->commandqueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
+
+	// Present the frame.
+	ThrowIfFailed(m_Data->swapchain->Present(1, 0));
+
+	WaitForPreviousFrame();
 }

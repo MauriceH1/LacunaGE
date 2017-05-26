@@ -3,8 +3,9 @@ cmake_minimum_required(VERSION 3.7)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 #add_definitions(-D_UNICODE -DUNICODE)
 
-set(LCN_ASSIMP_INCLUDES ${LCN_ASSIMP_INCLUDES} "${CMAKE_SOURCE_DIR}/thirdparty/assimp-3.3.1/include")
+set(LCN_ASSIMP_INCLUDES ${LCN_ASSIMP_INCLUDES} "${CMAKE_SOURCE_DIR}/thirdparty/assimp-3.3.1/include/")
 set(LCN_GLM_INCLUDES ${LCN_GLM_INCLUDES} "${CMAKE_SOURCE_DIR}/thirdparty/glm-0.9.8.4/")
+set(LCN_MC_INCLUDES ${LCN_MC_INCLUDES} "${CMAKE_SOURCE_DIR}/thirdparty/moodycamel/")
 
 project(LacunaGE)
 

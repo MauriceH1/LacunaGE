@@ -2,6 +2,7 @@
 
 #include "resources\Device.h"
 #include "game_objects/Entity.h"
+#include "resources/SceneResource.h"
 
 #include <glm\vec3.hpp>
 #include <glm\vec4.hpp>
@@ -28,7 +29,7 @@ namespace lcn::graphics
 		virtual ~Renderer() {};
 
 		virtual bool Initialize(const lcn::platform::specifics::PlatformHandles* a_Handles) = 0;
-		virtual void Render(lcn::object::Entity* a_RootEntity) = 0;
+		virtual void Render(lcn::resources::SceneResource* a_Scene) = 0;
 		virtual void Cleanup() = 0;
 
 		virtual const lcn::resources::Device* GetDevice() const = 0;

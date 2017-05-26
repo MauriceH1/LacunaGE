@@ -8,7 +8,7 @@ namespace lcn::object
 		Camera();
 		~Camera();
 
-		virtual void Update() override;
+		virtual void Update();
 
 		const glm::mat4 GetViewMatrix() const;
 		const glm::mat4 GetProjectionMatrix() const;

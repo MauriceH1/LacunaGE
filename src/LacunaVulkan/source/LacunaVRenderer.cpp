@@ -105,7 +105,7 @@ bool LacunaVRenderer::Initialize(const lcn::platform::specifics::PlatformHandles
     return 0;
 }
 
-void LacunaVRenderer::Render(lcn::object::Entity* a_RootEntity)
+void LacunaVRenderer::Render(lcn::resources::SceneResource* a_Scene)
 {
     
 }

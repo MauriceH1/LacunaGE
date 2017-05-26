@@ -1,5 +1,8 @@
 #include "resources\ResourceManager.h"
-#include "resources\Device.h"
+#include "system\EntityFactory.h"
+#include "game_objects\Entity.h"
+#include "game_objects\Components\MeshComponent.h"
+//#include "resources\Device.h"
 
 #include "resources\Vertex.h"
 
@@ -54,18 +57,22 @@ GUID ResourceManager::CreatePipeline(const PipelineParams a_Params)
 	return m_Data->device->CreatePipelineState(&a_Params);
 }
 
-GUID ResourceManager::LoadModel(const char* a_RelPath)
+lcn::object::Entity* ResourceManager::LoadModel(const char* a_RelPath)
 {
 	Assimp::Importer importer;
 
 	std::string assetPath = m_Data->path;
 	assetPath.append(a_RelPath);
 
+	lcn::object::Entity* a_ModelRoot = nullptr;
+
 	const aiScene* scene = importer.ReadFile(assetPath.c_str(), aiProcess_Triangulate );
 	if (scene && !(scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) && scene->mRootNode)
 	{
-		ImportMeshes(scene);
-		ProcessImportedNodes(scene->mRootNode, scene);
+		std::vector<uint32_t> nodeLinker;
+		ImportMeshes(scene, &nodeLinker);
+		a_ModelRoot = ProcessImportedNodes(scene->mRootNode, scene, &nodeLinker);
+		std::cout << "Imported!\n";
 	}
 #ifdef _DEBUG
 	else
@@ -74,7 +81,7 @@ GUID ResourceManager::LoadModel(const char* a_RelPath)
 	}
 #endif
 
-	return 0;
+	return a_ModelRoot;
 }
 
 GUID ResourceManager::LoadShader(const char* a_RelPath)
@@ -89,9 +96,12 @@ GUID ResourceManager::LoadAndCompileShader(const char* a_RelPath, const char* a_
 	return m_Data->device->UploadAndCompileShader(shaderPath.c_str(), a_EntryPoint, a_ShaderType);
 }
 
-void ResourceManager::ImportMeshes(const void *a_Scene)
+void ResourceManager::ImportMeshes(const void* a_Scene, void* a_NodeLinker)
 {
+	std::vector<uint32_t>* nodeLinker = (std::vector<uint32_t>*)a_NodeLinker;
+
 	const aiScene* scene = (aiScene*)a_Scene;
+	std::cout << "Meshes: " << scene->mNumMeshes << std::endl;
 	for (unsigned int m = 0; m < scene->mNumMeshes; m++)
 	{
 		const aiMesh *mesh = scene->mMeshes[m];
@@ -108,7 +118,7 @@ void ResourceManager::ImportMeshes(const void *a_Scene)
 			}
 			if (mesh->HasTextureCoords(0))
 			{
-				vertexArray[v].texCoord = *( glm::vec2* )&mesh->mTextureCoords[0][v]; // TexCoords store in vertex texcoord
+				vertexArray[v].texCoord = *( glm::vec2* )&mesh->mTextureCoords[0][v]; // TexCoords store in vertex texcoords
 
 				switch ( mesh->mNumUVComponents[0] )
 				{
@@ -133,16 +143,37 @@ void ResourceManager::ImportMeshes(const void *a_Scene)
 			}
 		}
 
-		m_Data->m_Meshes.push_back(m_Data->device->UploadMesh(vertexArray, mesh->mNumVertices, indexArray.data(), (uint32_t)indexArray.size()));
+		uint32_t meshGUID = m_Data->device->UploadMesh(vertexArray, mesh->mNumVertices, indexArray.data(), (uint32_t)indexArray.size());
+		m_Data->m_Meshes.push_back(meshGUID);
+		nodeLinker->push_back(meshGUID);
 	}
 }
 
-void ResourceManager::ProcessImportedNodes(const void *a_Node, const void *a_Scene)
+lcn::object::Entity* ResourceManager::ProcessImportedNodes(const void* a_Node, const void* a_Scene, void* a_NodeLinker, lcn::object::Entity* a_ParentEntity)
 {
 	const aiNode* node = (aiNode*)a_Node;
+	std::vector<uint32_t>* nodeLinker = (std::vector<uint32_t>*)a_NodeLinker;
+
+	lcn::object::Entity* entity = EntityFactory::CreateEntity();
+	entity->SetLocalMatrix(*(glm::mat4x4*)&node->mTransformation);
+
+	std::cout << "Processing Node!\n";
+
+	if(a_ParentEntity)
+		a_ParentEntity->AddChild(entity);
+
+	for (unsigned int i = 0; i < node->mNumMeshes; i++)
+	{
+		lcn::object::MeshComponent* meshComp = new lcn::object::MeshComponent();
+		meshComp->SetMeshGUID(nodeLinker->at(node->mMeshes[i]));
+		entity->AddComponent(meshComp);
+	}
+
 	unsigned int a = node->mNumChildren;
 	for (unsigned int n = 0; n < a; n++)
 	{
-		ProcessImportedNodes(node->mChildren[n], a_Scene);
+		ProcessImportedNodes(node->mChildren[n], a_Scene, a_NodeLinker, entity);
 	}
+
+	return entity;
 }

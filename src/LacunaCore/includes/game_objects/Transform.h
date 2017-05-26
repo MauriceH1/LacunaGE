@@ -1,3 +1,5 @@
+#pragma once
+
 #include <glm\mat4x4.hpp>
 #include <glm\gtc\quaternion.hpp>
 #include <glm\vec3.hpp>
@@ -15,6 +17,8 @@ namespace lcn::object
 	
 		void Update();
 
+		void SetLocalMatrix(glm::mat4x4);
+
 		void SetTranslation(glm::vec3 a_Translation);
 		void SetRotation(glm::quat a_Rotation);
 		void SetScale(glm::vec3 a_Scale);
@@ -30,17 +34,21 @@ namespace lcn::object
 		glm::vec3 GetScale();
 
 		glm::vec3 GetForward();
+		glm::vec3 GetUp();
+		glm::vec3 GetRight();
+
 	
+		void SetOutdated();
 	private:
 		Entity* m_Owner = nullptr;
-		Transform* m_Parent = nullptr;
 
-		bool m_Uptodate = true;
+		bool m_Uptodate = false;
 
 		glm::vec3 m_Scale;
 		glm::quat m_Rotation;
 		glm::vec3 m_Translation;
 		glm::mat4 m_LocalMatrix;
+		glm::mat4 m_WorldMatrix;
 
 		glm::vec3 m_Forward;
 		glm::vec3 m_Up;
