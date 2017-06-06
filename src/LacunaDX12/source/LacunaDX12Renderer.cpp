@@ -9,6 +9,10 @@
 #include <iostream>
 #include <stack>
 
+#define DX12_CBUFFER_ALIGNMENT (256)
+#define DX12_ALIGNED_SIZE(size, alignment) ((size + (alignment - 1) & (~(alignment - 1))))
+#define DX12_CONSTANT_BUFFER_ELEMENT_SIZE(elementBytes) DX12_ALIGNED_SIZE(elementBytes, DX12_CBUFFER_ALIGNMENT)
+
 /*
 	This file is heavily based upon the DX-Graphics-Sample files provided by Microsoft
 	A new version of this is in the works but not yet ready for implementation.
@@ -22,9 +26,6 @@ using Microsoft::WRL::ComPtr;
 struct MVP_CONSTANT_BUFFER {
 	glm::mat4 mvp;
 };
-
-static MVP_CONSTANT_BUFFER mvp_cb;
-static glm::vec3 m_Rotation;
 
 LacunaDX12Renderer::LacunaDX12Renderer()
 	: Renderer()
@@ -42,12 +43,13 @@ bool LacunaDX12Renderer::Initialize(const lcn::platform::specifics::PlatformHand
 {
 	UINT dxgiFactoryFlags = 0;
 
-	m_Data->viewport.TopLeftX = 0.0f;
-	m_Data->viewport.TopLeftY = 0.0f;
-	m_Data->viewport.Width = GRAPHICS_BUFFER_WIDTH;
-	m_Data->viewport.Height = GRAPHICS_BUFFER_HEIGHT;
-	m_Data->viewport.MaxDepth = 1000.f;
-	m_Data->viewport.MinDepth = 0.001f;
+	// m_Data->viewport.TopLeftX = 0.0f;
+	// m_Data->viewport.TopLeftY = 0.0f;
+	// m_Data->viewport.Width = GRAPHICS_BUFFER_WIDTH;
+	// m_Data->viewport.Height = GRAPHICS_BUFFER_HEIGHT;
+	// m_Data->viewport.MaxDepth = 1000.f;
+	// m_Data->viewport.MinDepth = -1.000f;
+	m_Data->viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, GRAPHICS_BUFFER_WIDTH, GRAPHICS_BUFFER_HEIGHT);
 
 	m_Data->scissorRect.left = 0;
 	m_Data->scissorRect.top = 0;
@@ -155,6 +157,12 @@ bool LacunaDX12Renderer::Initialize(const lcn::platform::specifics::PlatformHand
 		ThrowIfFailed(m_Data->device->CreateDescriptorHeap(&rtvHeapDesc, IID_PPV_ARGS(&m_Data->rtvHeap)));
 		m_Data->rtvDescriptorSize = m_Data->device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
+		D3D12_DESCRIPTOR_HEAP_DESC depthHeapDesc = {};
+		depthHeapDesc.NumDescriptors = NUM_GRAPHICS_BUFFERS;
+		depthHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+		depthHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
+		ThrowIfFailed(m_Data->device->CreateDescriptorHeap(&depthHeapDesc, IID_PPV_ARGS(&m_Data->dsvHeap)));
+
 		// Constant buffer view heap
 		D3D12_DESCRIPTOR_HEAP_DESC cbvHeapDesc = {};
 		cbvHeapDesc.NumDescriptors = 1;
@@ -197,25 +205,38 @@ void LacunaDX12Renderer::CreateObjects()
 		ThrowIfFailed(m_Data->device->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 			D3D12_HEAP_FLAG_NONE,
-			&CD3DX12_RESOURCE_DESC::Buffer(1024 * 64),
+			&CD3DX12_RESOURCE_DESC::Buffer(DX12_ALIGNED_SIZE(512 * DX12_CONSTANT_BUFFER_ELEMENT_SIZE(sizeof(MVP_CONSTANT_BUFFER)), 64 * 1024)),
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(&m_Data->constantBuffer)));
-
-		// Describe and create a constant buffer view.
-		D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
-		cbvDesc.BufferLocation = m_Data->constantBuffer->GetGPUVirtualAddress();
-		cbvDesc.SizeInBytes = (sizeof(MVP_CONSTANT_BUFFER) + 255) & ~255;	// CB size is required to be 256-byte aligned.
-		m_Data->device->CreateConstantBufferView(&cbvDesc, m_Data->cbvHeap->GetCPUDescriptorHandleForHeapStart());
 
 		// Map and initialize the constant buffer. We don't unmap this until the
 		// app closes. Keeping things mapped for the lifetime of the resource is okay.
 		CD3DX12_RANGE readRange(0, 0);		// We do not intend to read from this resource on the CPU.
 		ThrowIfFailed(m_Data->constantBuffer->Map(0, &readRange, reinterpret_cast<void**>(&m_Data->m_cbvDataBegin)));
+	}
 
+	{
+		D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc = {};
+		dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
+		dsvDesc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
+		dsvDesc.Flags = D3D12_DSV_FLAG_NONE;
 
-		// m_Rotation = glm::vec3(0.f, 0.f, 0.f);
-		// mvp = glm::rotate(mvp, glm::length(m_Rotation), glm::normalize(m_Rotation));
+		D3D12_CLEAR_VALUE dsvOptimizedClearValue = {};
+		dsvOptimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
+		dsvOptimizedClearValue.DepthStencil.Depth = 1.0f;
+		dsvOptimizedClearValue.DepthStencil.Stencil = 0.0f;
+
+		m_Data->device->CreateCommittedResource(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+			D3D12_HEAP_FLAG_NONE,
+			&CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, GRAPHICS_BUFFER_WIDTH, GRAPHICS_BUFFER_HEIGHT, 1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+			D3D12_RESOURCE_STATE_DEPTH_WRITE,
+			&dsvOptimizedClearValue,
+			IID_PPV_ARGS(&m_Data->dsvBuffer)
+		);
+		m_Data->dsvHeap->SetName(L"Depth/Stencil Heap");
+		m_Data->device->CreateDepthStencilView(m_Data->dsvBuffer.Get(), &dsvDesc, m_Data->dsvHeap->GetCPUDescriptorHandleForHeapStart());
 	}
 	
 	//ID3D12CommandList* ppCommandLists[] = { m_Data->commandList.Get() };
@@ -244,22 +265,8 @@ void LacunaDX12Renderer::Render(lcn::resources::SceneResource* a_Scene)
 {
 	PrepareData(a_Scene);
 
-	lcn::object::Camera* camera = lcn::EntityFactory::GetMainCamera();
-	// glm::mat4 projectionMatrix = camera->GetProjectionMatrix();
-	// glm::mat4 viewMatrix = camera->GetViewMatrix();
-	// SEE IF THIS WOULD BE AN OPTIMIZATION
-
-	// Transform data
-	//MVP_CONSTANT_BUFFER buf = {};
-	//// glm::perspectiveFovRH<float>(glm::radians(80.f), 1280.f, 720, 0.001f, 1000.f)
-	//buf.mvp = camera->GetProjectionMatrix() * camera->GetViewMatrix() * a_RootEntity->GetWorldMatrix();// *glm::perspectiveFovLH<float>(glm::radians(80.f), 1280.f, 720, 0.001f, 1000.f);
-	//
-	//memcpy(m_Data->m_cbvDataBegin, &buf, sizeof(buf));
-
-	// EndPreparation();
-
 	// // Record all the commands we need to render the scene into the command list.
-	PopulateCommandList();
+	PopulateCommandList(a_Scene);
 
 	// Execute the command list.
 	ID3D12CommandList* ppCommandLists[] = { m_Data->commandList.Get() };
@@ -285,7 +292,7 @@ void LacunaDX12Renderer::PrepareData(lcn::resources::SceneResource* a_Scene)
 		for (size_t j = 0; j < meshes.size(); j++)
 		{
 			mvp_cb.mvp = camera->GetProjectionMatrix() * camera->GetViewMatrix() * entities->at(i)->GetWorldMatrix();
-			memcpy(m_Data->m_cbvDataBegin + j * sizeof(mvp_cb), &mvp_cb, sizeof(mvp_cb));
+			memcpy(m_Data->m_cbvDataBegin + meshIndex * DX12_CONSTANT_BUFFER_ELEMENT_SIZE(sizeof(mvp_cb)), &mvp_cb, sizeof(mvp_cb));
 			meshIndex++;
 		}
 	}
@@ -325,7 +332,7 @@ void LacunaDX12Renderer::WaitForPreviousFrame()
 	m_Data->frameIndex = m_Data->swapchain->GetCurrentBackBufferIndex();
 }
 
-void LacunaDX12Renderer::PopulateCommandList()
+void LacunaDX12Renderer::PopulateCommandList(lcn::resources::SceneResource* a_Scene)
 {
 	// Command list allocators can only be reset when the associated 
 	// command lists have finished execution on the GPU; apps should use 
@@ -335,17 +342,13 @@ void LacunaDX12Renderer::PopulateCommandList()
 	// However, when ExecuteCommandList() is called on a particular command 
 	// list, that command list can then be reset at any time and must be before 
 	// re-recording.
-	// ThrowIfFailed(m_Data->commandList->Reset(m_Data->commandAllocator.Get(), m_Data->pipelineState.Get()));
 	ThrowIfFailed(m_Data->commandList->Reset(m_Data->commandAllocator.Get(), m_Data->myDevice.GetPipelineState(0).Get()));
 
 	// Set necessary state.
-	// m_Data->commandList->SetGraphicsRootSignature(m_Data->rootSignature.Get());
 	m_Data->commandList->SetGraphicsRootSignature(m_Data->myDevice.GetRootSignature().Get());
 
 	ID3D12DescriptorHeap* ppHeaps[] = { m_Data->cbvHeap.Get() };
 	m_Data->commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
-	// TODO: HERE WE ARE
-	m_Data->commandList->SetGraphicsRootDescriptorTable(0, m_Data->cbvHeap->GetGPUDescriptorHandleForHeapStart());
 
 	m_Data->commandList->RSSetViewports(1, &m_Data->viewport);
 	m_Data->commandList->RSSetScissorRects(1, &m_Data->scissorRect);
@@ -354,51 +357,34 @@ void LacunaDX12Renderer::PopulateCommandList()
 	m_Data->commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_Data->renderTargets[m_Data->frameIndex].Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET));
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_Data->rtvHeap->GetCPUDescriptorHandleForHeapStart(), m_Data->frameIndex, m_Data->rtvDescriptorSize);
-	m_Data->commandList->OMSetRenderTargets(1, &rtvHandle, FALSE, nullptr);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE dsvHandle(m_Data->dsvHeap->GetCPUDescriptorHandleForHeapStart());
+	m_Data->commandList->OMSetRenderTargets(1, &rtvHandle, false, &dsvHandle);
 
 	// Record commands.
 	const float clearColor[] = {0.1f, 0.1f, 0.1f, 1.0f};
 	m_Data->commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-	m_Data->commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);// D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_Data->commandList->IASetVertexBuffers(0, 1, &m_Data->myDevice.GetVertexBuffer(0));
-	m_Data->commandList->IASetIndexBuffer(&m_Data->myDevice.GetIndexBuffer(0));
-	m_Data->commandList->DrawIndexedInstanced(36, 1, 0, 0, 0);
+	m_Data->commandList->ClearDepthStencilView(m_Data->dsvHeap->GetCPUDescriptorHandleForHeapStart(), D3D12_CLEAR_FLAG_DEPTH, 1.0f, 0.0f, 0, nullptr);
+
+	m_Data->commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	const std::vector<lcn::object::Entity*>* entities = a_Scene->GetEntities();
+	int meshIndex = 0;
+	for (size_t i = 0; i < entities->size(); i++)
+	{
+		std::vector<lcn::object::MeshComponent*> meshes = entities->at(i)->GetComponentsByType<lcn::object::MeshComponent>();
+		for (size_t j = 0; j < meshes.size(); j++)
+		{
+			size_t inc = DX12_CONSTANT_BUFFER_ELEMENT_SIZE(sizeof(MVP_CONSTANT_BUFFER)) * meshIndex;
+			m_Data->commandList->SetGraphicsRootConstantBufferView(0, m_Data->constantBuffer->GetGPUVirtualAddress() + inc);
+			meshIndex++;
+			m_Data->commandList->IASetVertexBuffers(0, 1, &m_Data->myDevice.GetVertexBuffer(meshes.at(j)->GetMeshGUID()));
+			m_Data->commandList->IASetIndexBuffer(&m_Data->myDevice.GetIndexBuffer(meshes.at(j)->GetMeshGUID()));
+			m_Data->commandList->DrawIndexedInstanced(meshes.at(j)->GetMeshIndexCount(), 1, 0, 0, 0);
+		}
+	}
 
 	// Indicate that the back buffer will now be used to present.
 	m_Data->commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(m_Data->renderTargets[m_Data->frameIndex].Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT));
 
 	ThrowIfFailed(m_Data->commandList->Close());
-}
-
-void LacunaDX12Renderer::OldRender()
-{
-	m_Rotation.y += 15.f / 60.f;
-	m_Rotation.z += 5.f / 60.f;
-	m_Rotation.x -= 5.f / 60.f;
-	if (m_Rotation.z > 360)
-		m_Rotation.z - 360;
-	if (m_Rotation.y > 360)
-		m_Rotation.y - 360;
-	if (m_Rotation.x < -360)
-		m_Rotation.x + 360;
-	glm::mat4 mvp = glm::perspectiveFovLH<float>(glm::radians(80.f), 1280.f, 720, 0.001f, 1000.f);
-	mvp = glm::translate(mvp, glm::vec3(-1.2f, -1.5f, 4.0f));
-	mvp = glm::rotate(mvp, glm::length(m_Rotation), glm::normalize(m_Rotation));
-	//memcpy(m_Data->m_cbvDataBegin, &mvp_cb, sizeof(mvp_cb));
-
-	mvp_cb.mvp = mvp;
-
-	memcpy(m_Data->m_cbvDataBegin, &mvp_cb, sizeof(mvp_cb));
-	// 
-	// // Record all the commands we need to render the scene into the command list.
-	PopulateCommandList();
-
-	// Execute the command list.
-	ID3D12CommandList* ppCommandLists[] = { m_Data->commandList.Get() };
-	m_Data->commandqueue->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
-
-	// Present the frame.
-	ThrowIfFailed(m_Data->swapchain->Present(1, 0));
-
-	WaitForPreviousFrame();
 }

@@ -7,6 +7,8 @@
 #include <dxgi1_5.h>
 #include <d3dcompiler.h>
 
+#define SAFE_RELEASE(p) { if ( (p) ) { (p)->Release(); (p) = 0; } }
+
 #include <exception>
 
 #define USE_WARP_DEVICE false
@@ -33,8 +35,11 @@ namespace lcn::graphics::helpers
 		Microsoft::WRL::ComPtr<ID3D12Resource> renderTargets[NUM_GRAPHICS_BUFFERS];
 		Microsoft::WRL::ComPtr<ID3D12CommandQueue> commandqueue;
 		Microsoft::WRL::ComPtr<ID3D12CommandAllocator> commandAllocator;
+
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> rtvHeap;
+		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> dsvHeap;
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> cbvHeap;
+
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState;
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
@@ -48,12 +53,15 @@ namespace lcn::graphics::helpers
 		D3D12_VERTEX_BUFFER_VIEW vertexBufferView;
 		D3D12_INDEX_BUFFER_VIEW indexBufferView;
 
+		Microsoft::WRL::ComPtr<ID3D12Resource> dsvBuffer;
 		Microsoft::WRL::ComPtr<ID3D12Resource> constantBuffer;
 
-		UINT* m_cbvDataBegin = nullptr;
+		uint8_t* m_cbvDataBegin = nullptr;
 
 		UINT frameIndex = 0;
 		UINT rtvDescriptorSize;
+
+
 
 		CD3DX12_VIEWPORT viewport;
 		CD3DX12_RECT scissorRect;

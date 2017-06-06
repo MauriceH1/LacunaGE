@@ -13,14 +13,13 @@ namespace lcn::graphics
 
 		virtual bool Initialize(const lcn::platform::specifics::PlatformHandles* a_Handles) override final;
 		virtual void Render(lcn::resources::SceneResource* a_Scene) override final;
-		void OldRender();
 		virtual void Cleanup() override final;
 
 		virtual const lcn::resources::Device* GetDevice() const;
 
 	private:
 		void WaitForPreviousFrame();
-		void PopulateCommandList();
+		void PopulateCommandList(lcn::resources::SceneResource* a_Scene);
 		void PrepareData(lcn::resources::SceneResource* a_Scene);
 
 		struct helpers::DX12Data* m_Data;

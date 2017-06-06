@@ -36,13 +36,19 @@ void main(int argc, char* argv[])
 
 	// ################## SETUP ENTITIES ####################
 	lcn::resources::SceneResource* myScene = lcnCreateScene();
-	lcn::object::Entity* cubeParent = lcn::EntityFactory::CreateEntity();
-	lcn::object::Entity* cube = resourceManager->LoadModel("assets/cube.obj");
-	cubeParent->AddChild(cube);
-	cubeParent->SetPosition(glm::vec3(5.0f, 1.0f, 2.0f));
-	// lcn::object::Entity* sponza = resourceManager->LoadModel("assets/sponza/sponza.obj");
+	// lcn::object::Entity* cubeParent = lcn::EntityFactory::CreateEntity();
+	// lcn::object::Entity* cube = resourceManager->LoadModel("assets/cube.obj");
+	// lcn::object::Entity* cube2 = resourceManager->LoadModel("assets/cube.obj");
+	// lcn::object::Entity* cube3 = resourceManager->LoadModel("assets/cube.obj");
+	// cubeParent->AddChild(cube);
+	// cubeParent->AddChild(cube2);
+	// cubeParent->AddChild(cube3);
+	// cubeParent->SetPosition(glm::vec3(5.0f, 1.0f, 2.0f));
+	// cube2->SetPosition(glm::vec3(-5.0f, -1.0f, -2.0f));
+	// cube3->SetPosition(glm::vec3(-10.f, -2.0f, -4.0f));
+	lcn::object::Entity* sponza = resourceManager->LoadModel("assets/sponza/sponza.obj");
 
-	myScene->AddChild(cubeParent);
+	myScene->AddChild(sponza);
 
 	lcnSetupEntities(myScene);
 
@@ -67,14 +73,15 @@ void main(int argc, char* argv[])
 	// ################## ENTER GAMELOOP #####################
 	while(window->HandleMessages() == 0)
 	{
-		{ // This needs to be cleaner and I need to find a way to multithread without creating new threads every frame.
-			entitiesToUpdate.enqueue_bulk(myScene->GetChildren()->begin(), myScene->GetChildren()->size());
-			for (int i = 0; i < 7; i++)
-				workers[i] = std::thread(UpdateTransforms, &entitiesToUpdate);
-			UpdateTransforms(&entitiesToUpdate);
-			for (int i = 0; i < 7; i++)
-				workers[i].join();
-		}
+		// { // This needs to be cleaner and I need to find a way to multithread without creating new threads every frame.
+		// 	entitiesToUpdate.enqueue_bulk(myScene->GetChildren()->begin(), myScene->GetChildren()->size());
+		// 	for (int i = 0; i < 7; i++)
+		// 		workers[i] = std::thread(UpdateTransforms, &entitiesToUpdate);
+		// 	
+		// 	UpdateTransforms(&entitiesToUpdate);
+		// 	for (int i = 0; i < 7; i++)
+		// 		workers[i].join();
+		// }
 
 		renderer->Render(myScene);
 		lcn::EntityFactory::GetMainCamera()->Update();
@@ -88,10 +95,6 @@ void main(int argc, char* argv[])
 
 void lcnSetupEntities(lcn::resources::SceneResource* a_Scene)
 {
-	//lcn::object::Entity* entity = lcn::EntityFactory::CreateEntity();
-	//entity->AddComponent(new lcn::object::MeshComponent());
-	//entity->SetPosition(glm::vec3(2.0f, 5.0f, -10.0f));
-
 	lcn::object::Entity* camera = lcn::EntityFactory::CreateCamera();
 	camera->SetPosition(glm::vec3(0.f, 0.f, 10.0f));
 

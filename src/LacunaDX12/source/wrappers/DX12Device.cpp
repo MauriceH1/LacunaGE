@@ -37,7 +37,8 @@ DX12Device::~DX12Device()
 	//	delete m_Data->vertexBuffers.at(i).ReleaseAndGetAddressOf();
 	//}
 	//
-	//delete m_Data->device.ReleaseAndGetAddressOf();
+	// delete m_Data->device.ReleaseAndGetAddressOf();
+
 }
 
 bool DX12Device::Initialize(Microsoft::WRL::ComPtr<ID3D12Device> a_Device)
@@ -100,7 +101,18 @@ const uint32_t DX12Device::UploadAndCompileShader(const char* a_AbsPath, const c
 			assert(false);
 		} break;
 	}
-	ThrowIfFailed(D3DCompileFromFile(uni_path, nullptr, nullptr, a_EntryPoint, shaderTarget.c_str(), compileFlags, 0, &shaderBlob, nullptr));
+
+	ID3DBlob* err = nullptr;
+
+	D3DCompileFromFile(uni_path, nullptr, nullptr, a_EntryPoint, shaderTarget.c_str(), compileFlags, 0, &shaderBlob, &err);
+	if (shaderBlob == nullptr)
+	{
+		char* msg = (char*)err->GetBufferPointer();
+		std::cout << msg << std::endl;
+
+		ThrowIfFailed(1);
+	}
+
 	m_Data->shaders.push_back(shaderBlob);
 	return m_Data->shaders.size() - 1;
 }
@@ -204,7 +216,7 @@ uint32_t DX12Device::CreateNormalPipelineState(const PipelineParams* const a_Par
 	rasterizerDesc.FrontCounterClockwise = TRUE;
 	rasterizerDesc.CullMode = D3D12_CULL_MODE_BACK;
 	rasterizerDesc.FillMode = D3D12_FILL_MODE_SOLID;
-	rasterizerDesc.MultisampleEnable = true;
+	rasterizerDesc.MultisampleEnable = false;
 
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC psoDesc = {};
 	psoDesc.InputLayout = { inputElementDescs, _countof(inputElementDescs) };
@@ -213,8 +225,8 @@ uint32_t DX12Device::CreateNormalPipelineState(const PipelineParams* const a_Par
 	psoDesc.PS = CD3DX12_SHADER_BYTECODE(m_Data->shaders.at(a_Params->PixelShader).Get());
 	psoDesc.RasterizerState = rasterizerDesc;
 	psoDesc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-	psoDesc.DepthStencilState.DepthEnable = false;
-	psoDesc.DepthStencilState.StencilEnable = false;
+	psoDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	psoDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
 	psoDesc.SampleMask = UINT_MAX;
 	psoDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	psoDesc.NumRenderTargets = 1;
@@ -241,11 +253,12 @@ uint32_t DX12Device::CreateRootSignature() const
 		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 	}
 
-	CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
+	// CD3DX12_DESCRIPTOR_RANGE1 ranges[1];
 	CD3DX12_ROOT_PARAMETER1 rootParameters[1];
 
-	ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
-	rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
+	// ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_CBV, 1, 0, 0, D3D12_DESCRIPTOR_RANGE_FLAG_DATA_STATIC);
+	rootParameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_VERTEX);
+	// rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_VERTEX);
 
 	// Allow input layout and deny unnecessary access to certain pipeline stages.
 	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
