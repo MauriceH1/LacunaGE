@@ -9,7 +9,7 @@ This project requires at least Visual Studio 2015. Use CMake with Visual Studio 
 <br />
 My next goal is to overhaul my graphics pipeline since that has not seen any love and still only renders 1 object instead of the scene.<br />
 <br />
-The startup project should be LacunaCore, haven't found a way to set the startup project in CMake. Haven't really looked in to it either to be honest.
+The startup project should be LacunaCore, so if CMake doesn't automatically set this you can still run it.
 <br />
 Structure:
 /<br />
