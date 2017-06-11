@@ -7,9 +7,8 @@ suggestions, questions and feedback are welcome.
 <br />
 This project requires at least Visual Studio 2015. Use CMake with Visual Studio 14 2015 Win64 or Higher. Win64 is necessary.<br />
 <br />
-My next goal is to overhaul my graphics pipeline since that has not seen any love and still only renders 1 object instead of the scene.<br />
+The next addition to the engine will be materials and instanced rendering.
 <br />
-The startup project should be LacunaCore, haven't found a way to set the startup project in CMake. Haven't really looked in to it either to be honest.
 <br />
 Structure:
 /<br />

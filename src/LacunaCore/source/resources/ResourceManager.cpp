@@ -22,6 +22,7 @@ namespace lcn::resources
 	struct ResourceData {
 		const Device* device;
 		std::vector<uint32_t> m_Meshes;
+		std::vector<uint32_t> m_MeshIndexCounts;
 		std::string path;
 	};
 }; // namespace lcn::resources
@@ -66,13 +67,12 @@ lcn::object::Entity* ResourceManager::LoadModel(const char* a_RelPath)
 
 	lcn::object::Entity* a_ModelRoot = nullptr;
 
-	const aiScene* scene = importer.ReadFile(assetPath.c_str(), aiProcess_Triangulate );
+	const aiScene* scene = importer.ReadFile(assetPath.c_str(), aiProcess_Triangulate | aiProcess_ConvertToLeftHanded);
 	if (scene && !(scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE) && scene->mRootNode)
 	{
 		std::vector<uint32_t> nodeLinker;
 		ImportMeshes(scene, &nodeLinker);
 		a_ModelRoot = ProcessImportedNodes(scene->mRootNode, scene, &nodeLinker);
-		std::cout << "Imported!\n";
 	}
 #ifdef _DEBUG
 	else
@@ -101,7 +101,6 @@ void ResourceManager::ImportMeshes(const void* a_Scene, void* a_NodeLinker)
 	std::vector<uint32_t>* nodeLinker = (std::vector<uint32_t>*)a_NodeLinker;
 
 	const aiScene* scene = (aiScene*)a_Scene;
-	std::cout << "Meshes: " << scene->mNumMeshes << std::endl;
 	for (unsigned int m = 0; m < scene->mNumMeshes; m++)
 	{
 		const aiMesh *mesh = scene->mMeshes[m];
@@ -145,6 +144,7 @@ void ResourceManager::ImportMeshes(const void* a_Scene, void* a_NodeLinker)
 
 		uint32_t meshGUID = m_Data->device->UploadMesh(vertexArray, mesh->mNumVertices, indexArray.data(), (uint32_t)indexArray.size());
 		m_Data->m_Meshes.push_back(meshGUID);
+		m_Data->m_MeshIndexCounts.push_back(indexArray.size());
 		nodeLinker->push_back(meshGUID);
 	}
 }
@@ -157,8 +157,6 @@ lcn::object::Entity* ResourceManager::ProcessImportedNodes(const void* a_Node, c
 	lcn::object::Entity* entity = EntityFactory::CreateEntity();
 	entity->SetLocalMatrix(*(glm::mat4x4*)&node->mTransformation);
 
-	std::cout << "Processing Node!\n";
-
 	if(a_ParentEntity)
 		a_ParentEntity->AddChild(entity);
 
@@ -166,6 +164,7 @@ lcn::object::Entity* ResourceManager::ProcessImportedNodes(const void* a_Node, c
 	{
 		lcn::object::MeshComponent* meshComp = new lcn::object::MeshComponent();
 		meshComp->SetMeshGUID(nodeLinker->at(node->mMeshes[i]));
+		meshComp->SetMeshIndexCount(m_Data->m_MeshIndexCounts.at(nodeLinker->at(node->mMeshes[i])));
 		entity->AddComponent(meshComp);
 	}
 
