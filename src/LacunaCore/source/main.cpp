@@ -37,7 +37,7 @@ void main(int argc, char* argv[])
 	// ################## SETUP ENTITIES ####################
 	lcn::resources::SceneResource* myScene = lcnCreateScene();
 	// lcn::object::Entity* cubeParent = lcn::EntityFactory::CreateEntity();
-	lcn::object::Entity* cube = resourceManager->LoadModel("assets/cube.obj");
+	// lcn::object::Entity* cube = resourceManager->LoadModel("assets/cube.obj");
 	// lcn::object::Entity* cube2 = resourceManager->LoadModel("assets/cube.obj");
 	// lcn::object::Entity* cube3 = resourceManager->LoadModel("assets/cube.obj");
 	// cubeParent->AddChild(cube);
@@ -46,9 +46,11 @@ void main(int argc, char* argv[])
 	// cubeParent->SetPosition(glm::vec3(5.0f, 1.0f, 2.0f));
 	// cube2->SetPosition(glm::vec3(-5.0f, -1.0f, -2.0f));
 	// cube3->SetPosition(glm::vec3(-10.f, -2.0f, -4.0f));
-	// lcn::object::Entity* sponza = resourceManager->LoadModel("assets/sponza/sponza.obj");
+	lcn::object::Entity* sponza = resourceManager->LoadModel("assets/sponza/sponza.obj");
 
-	myScene->AddChild(cube);
+	resourceManager->LoadTexture("assets/sponza/spnza_bricks_a_normal.png");
+
+	myScene->AddChild(sponza);
 
 	lcnSetupEntities(myScene);
 
@@ -111,6 +113,7 @@ lcn::resources::SceneResource* lcnCreateScene()
 lcn::platform::LacunaWindow* lcnCreateWindow()
 {
 	lcn::platform::LacunaWindowOptions a_Options;
+	a_Options.size = glm::ivec2(2000, 1000);
 	a_Options.KeyUpFunction = &lcn::InputSystem::KeyUp;
 	a_Options.KeyDownFunction = &lcn::InputSystem::KeyDown;
 	return lcn::platform::CreateWindow(a_Options);

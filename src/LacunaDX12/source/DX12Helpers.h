@@ -8,6 +8,7 @@
 #include "d3dx12.h"
 #include <dxgi1_5.h>
 #include <d3dcompiler.h>
+#include <wincodec.h>
 
 #include <dxgidebug.h>
 
@@ -17,6 +18,10 @@
 #define NUM_GRAPHICS_BUFFERS 2
 #define GRAPHICS_BUFFER_WIDTH 1280
 #define GRAPHICS_BUFFER_HEIGHT 720
+
+#define DX12_CBUFFER_ALIGNMENT (256)
+#define DX12_ALIGNED_SIZE(size, alignment) ((size + (alignment - 1) & (~(alignment - 1))))
+#define DX12_CONSTANT_BUFFER_ELEMENT_SIZE(elementBytes) DX12_ALIGNED_SIZE(elementBytes, DX12_CBUFFER_ALIGNMENT)
 
 namespace lcn::platform::specifics
 {
@@ -44,7 +49,6 @@ namespace lcn::graphics::helpers
 		Microsoft::WRL::ComPtr<ID3D12DescriptorHeap> cbvHeap;
 
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> rootSignature;
-		Microsoft::WRL::ComPtr<ID3D12PipelineState> pipelineState;
 		Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList> commandList;
 
 		Microsoft::WRL::ComPtr<ID3D12Fence> fence;

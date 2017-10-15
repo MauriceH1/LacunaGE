@@ -31,6 +31,8 @@ namespace lcn::resources
 		GUID LoadShader(const char* a_RelPath);
 		GUID LoadAndCompileShader(const char* a_RelPath, const char* a_EntryPoint, EShaderTypes a_ShaderType);
 
+		GUID LoadTexture(const char* a_RelPath);
+
 	private:
 		ResourceData* m_Data;
 

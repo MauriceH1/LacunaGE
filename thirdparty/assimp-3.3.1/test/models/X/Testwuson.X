@@ -131,7 +131,7 @@ KeyValuePair {
 
 KeyValuePair {
  "File";
- "G:\\Dreamworlds\\Modelling\\B\374\üffel Wuson\\3dsmax\\Wuson_FuerExterneTests.max";
+ "G:\\Dreamworlds\\Modelling\\B\374\Ã¼ffel Wuson\\3dsmax\\Wuson_FuerExterneTests.max";
 }
 
 KeyValuePair {

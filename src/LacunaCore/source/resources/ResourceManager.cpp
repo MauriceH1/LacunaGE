@@ -10,6 +10,9 @@
 #include <assimp\scene.h>
 #include <assimp\postprocess.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include <glm\geometric.hpp>
 
 #include <vector>
@@ -94,6 +97,21 @@ GUID ResourceManager::LoadAndCompileShader(const char* a_RelPath, const char* a_
 	std::string shaderPath = m_Data->path;
 	shaderPath.append(a_RelPath);
 	return m_Data->device->UploadAndCompileShader(shaderPath.c_str(), a_EntryPoint, a_ShaderType);
+}
+
+GUID ResourceManager::LoadTexture(const char* a_RelPath)
+{
+	int width = 0;
+	int height = 0;
+	int bpp = 0;
+	unsigned char* a_Buffer = stbi_load(a_RelPath, &width, &height, &bpp, 3);
+	std::cout << bpp << std::endl;
+	
+	m_Data->device->UploadTexture(a_Buffer, width, height, 32);
+
+	stbi_image_free(a_Buffer);
+
+	return 0;
 }
 
 void ResourceManager::ImportMeshes(const void* a_Scene, void* a_NodeLinker)

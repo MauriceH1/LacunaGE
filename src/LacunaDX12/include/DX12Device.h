@@ -9,7 +9,7 @@
 #include "resources/Device.h"
 #include "resources/Vertex.h"
 
-namespace lcn { namespace resources
+namespace lcn::resources
 {
 	struct DeviceData;
 	class DX12Device : public Device
@@ -27,6 +27,8 @@ namespace lcn { namespace resources
 
 		virtual const uint32_t UploadMesh(Vertex* a_Vertices, uint32_t a_NumVertices, const uint32_t* a_Indices, uint32_t a_NumIndices) const override;
 	
+		virtual const uint32_t UploadTexture(uint8_t* a_ImageData, uint32_t a_Width, uint32_t a_Height, uint32_t a_BPP) const override;
+
 		Microsoft::WRL::ComPtr<ID3D12PipelineState> GetPipelineState(uint32_t a_GUID) const;
 		Microsoft::WRL::ComPtr<ID3D12RootSignature> GetRootSignature() const;
 
@@ -38,4 +40,4 @@ namespace lcn { namespace resources
 		uint32_t CreateNormalPipelineState(const PipelineParams* const a_Params) const;
 		uint32_t CreateRootSignature() const;
 	};
-};}; // lcn::resources
+}; // lcn::resources

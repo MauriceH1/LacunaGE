@@ -159,7 +159,7 @@ Nelson Rush for SDL surface support and finding several bugs with DevIL.
 
 George McBay for his wonderful help finding bugs in my mipmapping code.
 
-Marco Kögler for finding bugs in my .jpg and .png code.
+Marco KÃ¶gler for finding bugs in my .jpg and .png code.
 
 Falco Kleinschmidt for fixing problems with the Linux makefiles.
 
@@ -179,7 +179,7 @@ about portability issues.
 boostrlns from #flipCode for finding the ilutGLLoadImage bug in the 1.1.5
 release.
 
-Ismo Kärkkäinen (iak@cs.joensuu.fi) for making some really nice new makefiles
+Ismo KÃ¤rkkÃ¤inen (iak@cs.joensuu.fi) for making some really nice new makefiles
 for Linux.
 
 Kishan (http://www.hackorama.com) for the nice directions on how to compile
@@ -250,7 +250,7 @@ Jesse Maurais for support of X11 component
 Translations:
 -------------
 
-Carlos Aragonés, for Spanish translation
+Carlos AragonÃ©s, for Spanish translation
 
 Bart De Lathouwer, for Danish translation
 
@@ -260,5 +260,5 @@ Abdullah Alshammari, for Arabic translation
 
 Osamu Ohara, for Japanese translation
 
-Andreas Stöckel, for German translation
+Andreas StÃ¶ckel, for German translation
 

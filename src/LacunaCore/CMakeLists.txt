@@ -23,6 +23,7 @@ include_directories(SYSTEM "${CMAKE_SOURCE_DIR}/src/LacunaCore/includes")
 
 include_directories(SYSTEM "${LCN_MC_INCLUDES}")
 include_directories(SYSTEM "${LCN_GLM_INCLUDES}")
+include_directories(SYSTEM "${LCN_STB_INCLUDES}")
 include_directories(SYSTEM "${LCN_ASSIMP_INCLUDES}")
 
 target_link_libraries(LacunaCore LacunaPlatform)

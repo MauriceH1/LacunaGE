@@ -9,15 +9,9 @@
 #include <iostream>
 #include <stack>
 
-#define DX12_CBUFFER_ALIGNMENT (256)
-#define DX12_ALIGNED_SIZE(size, alignment) ((size + (alignment - 1) & (~(alignment - 1))))
-#define DX12_CONSTANT_BUFFER_ELEMENT_SIZE(elementBytes) DX12_ALIGNED_SIZE(elementBytes, DX12_CBUFFER_ALIGNMENT)
-
 /*
 	This file is heavily based upon the DX-Graphics-Sample files provided by Microsoft
 	A new version of this is in the works but not yet ready for implementation.
-
-	Rendering currently happens with only 1 object
 */
 
 using namespace lcn::graphics;
@@ -181,6 +175,7 @@ bool LacunaDX12Renderer::Initialize(const lcn::platform::specifics::PlatformHand
 			ThrowIfFailed(m_Data->swapchain->GetBuffer(i, IID_PPV_ARGS(&m_Data->renderTargets[i])));
 			m_Data->device->CreateRenderTargetView(m_Data->renderTargets[i].Get(), nullptr, rtvHandle);
 			rtvHandle.Offset(1, m_Data->rtvDescriptorSize);
+			m_Data->renderTargets[i]->SetName(L"Render Target");
 		}
 	}
 
@@ -195,7 +190,7 @@ bool LacunaDX12Renderer::Initialize(const lcn::platform::specifics::PlatformHand
 void LacunaDX12Renderer::CreateObjects()
 {
 	// Create the command list.
-	ThrowIfFailed(m_Data->device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_Data->commandAllocator.Get(), m_Data->pipelineState.Get(), IID_PPV_ARGS(&m_Data->commandList)));
+	ThrowIfFailed(m_Data->device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, m_Data->commandAllocator.Get(), m_Data->myDevice.GetPipelineState(0).Get(), IID_PPV_ARGS(&m_Data->commandList)));
 
 	// Command lists are created in the recording state, but there is nothing
 	// to record yet. The main loop expects it to be closed, so close it now.
@@ -314,7 +309,7 @@ void LacunaDX12Renderer::Cleanup()
 		m_Data->renderTargets[i].Reset();
 
 	m_Data->rootSignature.Reset();
-	m_Data->pipelineState.Reset();
+	// m_Data->pipelineState.Reset();
 	
 	m_Data->DXGIFactory.Reset();
 
@@ -377,7 +372,7 @@ void LacunaDX12Renderer::PopulateCommandList(lcn::resources::SceneResource* a_Sc
 	// However, when ExecuteCommandList() is called on a particular command 
 	// list, that command list can then be reset at any time and must be before 
 	// re-recording.
-	ThrowIfFailed(m_Data->commandList->Reset(m_Data->commandAllocator.Get(), m_Data->myDevice.GetPipelineState(0).Get()));
+	ThrowIfFailed(m_Data->commandList->Reset(m_Data->commandAllocator.Get(), m_Data->myDevice.GetPipelineState(1).Get()));
 
 	// Set necessary state.
 	m_Data->commandList->SetGraphicsRootSignature(m_Data->myDevice.GetRootSignature().Get());
