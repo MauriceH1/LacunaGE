@@ -1,4 +1,10 @@
+<h2><strong>Warning:</strong> This project has been deprecated thanks to an architectural overhaul, a newer engine project is currently in the works. Check back at <a href="https://www.mauriceheijligers.com/portfolio/hadron-game-engine/" target="_blank">my portfolio</a> in a couple weeks/months for updates.</h2>
+<br />
+<br />
 This is an educational project!<br />
+<br />
+<br />
+CMake Build seems to break on Assimp's zLib library, I'm currently working on a fix.
 <br />
 My goal is to have a functional game engine that supports DX12, Vulkan, Is crossplatform, has a multithreaded entity component system, has physics handled my Bullet or PhysX and audio through WWise. I'm looking to implement clustered forward rendering, possibly a raytracer and if time permits I will develop a clone of this engine using my univisity's facilities to port the engine to PS4 as well.
 <br />
