@@ -1,4 +1,4 @@
-<h2><strong>Warning:</strong> This project has been deprecated thanks to an architectural overhaul, a newer engine project is currently in the works. Check back at <a href="https://www.mauriceheijligers.com/portfolio/hadron-game-engine/" target="_blank">my portfolio</a> in a couple weeks/months for updates.</h2>
+<h3><strong>Warning:</strong> This project has been deprecated thanks to an architectural overhaul, a newer engine project is currently in the works. Check back at <a href="https://www.mauriceheijligers.com/portfolio/hadron-game-engine/" target="_blank">my portfolio</a> in a couple weeks/months for updates.</h3>
 <br />
 <br />
 This is an educational project!<br />
